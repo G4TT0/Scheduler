@@ -11,6 +11,8 @@ void FakeOS_init(FakeOS* os) {
   List_init(&os->processes);
   os->timer=0;
   os->schedule_fn=0;
+  os->cpus = cpus;
+  printf("cpus: %d\n", os->cpus);
 }
 
 void FakeOS_createProcess(FakeOS* os, FakeProcess* p) {

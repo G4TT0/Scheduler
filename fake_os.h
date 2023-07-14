@@ -2,6 +2,7 @@
 #include "linked_list.h"
 #pragma once
 
+int cpus;
 
 typedef struct {
   ListItem list;
@@ -19,7 +20,7 @@ typedef struct FakeOS{
   int timer;
   ScheduleFn schedule_fn;
   void* schedule_args;
-
+  int cpus;
   ListHead processes;
 } FakeOS;
 
