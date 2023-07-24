@@ -1,5 +1,6 @@
 #include "linked_list.h"
 #include <assert.h>
+#include <stdio.h>
 
 void List_init(ListHead* head) {
   head->first=0;
@@ -88,5 +89,14 @@ ListItem* List_pushFront(ListHead* head, ListItem* item) {
 
 ListItem* List_popFront(ListHead* head) {
   return List_detach(head, head->first);
+}
+
+void List_print(ListHead* head) {
+  ListItem* aux=head->first;
+  while(aux){
+    printf("%p ", aux);
+    aux=aux->next;
+  }
+  printf("\n");
 }
 

@@ -8,6 +8,7 @@ FakeOS os;
 typedef struct
 {
     int quantum;
+    int lambda;
 } SchedRRArgs;
 
 void schedRR(FakeOS *os, void *args_)
@@ -41,16 +42,33 @@ void schedRR(FakeOS *os, void *args_)
     }
 };
 
+int make_prediction(FakeProcess* process, FakeOS* os){
+
+
+}
+
 void schedSJF(FakeOS *os, void *args_){
+    FakePCB *pcb = (FakePCB *)List_popFront(&os->ready);
+    os->running = pcb;
+
+    
 
 }
 
 int main(int argc, char **argv)
 {
-    cpus = atoi(argv[1]);
+    if (argc < 3){
+        printf("usage: %s <num_cpus> <process1> <process2> ...\n", argv[0]);
+        return -1;
+    }
+    if(!(cpus = atoi(argv[1]))){
+        printf("invalid number of cpus\n");
+        return -1;
+    }
     FakeOS_init(&os);
     SchedRRArgs srr_args;
     srr_args.quantum = 5;
+    srr_args.lambda = 0.3;
     os.schedule_args = &srr_args;
     os.schedule_fn = schedRR;
 
@@ -59,9 +77,9 @@ int main(int argc, char **argv)
     {
         FakeProcess new_process;
         int num_events = FakeProcess_load(&new_process, argv[i]);
-        printf("loading [%s], pid: %d, events:%d",
+        printf("loading [%s], pid: %d, events:%d\n",
                argv[i], new_process.pid, num_events);
-        if (num_events)
+        if (num_events != 0)
         {
             FakeProcess *new_process_ptr = (FakeProcess *)malloc(sizeof(FakeProcess));
             *new_process_ptr = new_process;
@@ -72,5 +90,6 @@ int main(int argc, char **argv)
     while (os.running || os.ready.first || os.waiting.first || os.processes.first)
     {
         FakeOS_simStep(&os);
+        ++os.timer;
     }
 }
