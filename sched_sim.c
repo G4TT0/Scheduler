@@ -42,10 +42,6 @@ void schedRR(FakeOS *os, void *args_)
     }
 };
 
-int make_prediction(FakeProcess* process, FakeOS* os){
-
-
-}
 
 void schedSJF(FakeOS *os, void *args_){
     FakePCB *pcb = (FakePCB *)List_popFront(&os->ready);
