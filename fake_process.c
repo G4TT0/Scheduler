@@ -73,9 +73,12 @@ int FakeProcess_load(FakeProcess *p, const char *filename)
     ProcessEvent* temp = (ProcessEvent*) p->events.first;
     printf("Events for process with pid: %d\n", p->pid);
     for (int i = 0; i < num_events; ++i){
-        printf("\tType: %s\n", temp->type==0?"CPU":"IO");
-        printf("\tDuration: %d\n", temp->duration);
-        printf("\tPrediction: %f\n", temp->prediction);
+        if (temp->type == CPU){
+            printf("\t-------Event n. %d-------\n", i);
+            printf("\tType: %s\n", temp->type==0?"CPU":"IO");
+            printf("\tDuration: %d\n", temp->duration);
+            printf("\tPrediction: %f\n", temp->prediction);
+        }
         temp = (ProcessEvent*)temp->list.next;
     }
 

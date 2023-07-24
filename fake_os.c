@@ -97,7 +97,6 @@ void FakeOS_simStep(FakeOS *os)
     aux = os->waiting.first;
     while (aux)
     {
-        printf("\tscanning waiting list at %d\n", os->timer);
         FakePCB *pcb = (FakePCB *)aux;
         aux = aux->next;
         ProcessEvent *e = (ProcessEvent *)pcb->events.first;
