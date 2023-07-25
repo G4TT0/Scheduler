@@ -5,10 +5,12 @@
 
 FakeOS os;
 
+
 typedef struct{
     int quantum;
     float lambda;
 } SchedSJFargs;
+
 
 FakePCB* findSJ(FakeOS *os){
     int n_proc = os->ready.size;
@@ -33,7 +35,7 @@ FakePCB* findSJ(FakeOS *os){
     return shortest;
 }
 
-void schedSJF(FakeOS *os, void *args_){
+void schedSJF(FakeOS *os, void *args_, int id){
     SchedSJFargs *args = (SchedSJFargs *)args_;
 
     // look for the first process in ready
@@ -60,7 +62,7 @@ void schedSJF(FakeOS *os, void *args_){
     FakePCB *pcb = (FakePCB*) findSJ(os);
     List_detach(&os->ready, (ListItem*)pcb);
 
-    os->running = pcb;
+    os->running[id] = pcb;
 
     assert(pcb->events.first);
     ProcessEvent* e = (ProcessEvent*)pcb->events.first;
@@ -92,13 +94,12 @@ int main(int argc, char **argv){
         printf("\033[1;31mInvalid number of cpus\n");
         return -1;
     }
-    FakeOS_init(&os);
+    FakeOS_init(&os, cpus);
     SchedSJFargs sjf_args;
     sjf_args.quantum = 5;
     sjf_args.lambda = 0.8;
     os.schedule_args = &sjf_args;
     os.schedule_fn = schedSJF;
-    os.cpus = cpus;
 
 
     for (int i = 2; i < argc; ++i){
@@ -113,20 +114,48 @@ int main(int argc, char **argv){
         }
     }
     printf("num processes in queue %d\n", os.processes.size);
+
+    int ret;
+    ret = sem_init(&mutex, 0, 1);
+    if(ret)perror("\033[1;31mSem_init failed\n");
+
     while (os.running || os.ready.first || os.waiting.first || os.processes.first){
-        int ret;
-        pthread_t* tids = (pthread_t*)malloc(cpus * sizeof(pthread_t));
+        int escape= 0;
+        for (int i = 0; i < cpus+1; i++){
+            if(i < cpus){
+                if(!os.running[i]) escape++;
+            }else{
+                if(!os.ready.first) escape++;
+                if(!os.waiting.first) escape++;
+                if(!os.processes.first) escape++;
+            }
+        }
+        if (escape == cpus + 3)break;
+
+        printf("************** TIME: %08d **************\n", os.timer);
+
+        //pthread_t* tids = (pthread_t*)malloc(cpus * sizeof(pthread_t));
+        pthread_t tids[cpus];
+
         for (int i = 0; i < cpus; ++i){
-            pthread_t tid = tids[i];
-            ret = pthread_create(&tid, NULL, FakeOS_simStep, (void*)&os);
+            thread_args_t* args = (thread_args_t*) malloc(sizeof(thread_args_t));
+            args->os = &os;
+            args->threadId = i;
+            ret = pthread_create(&tids[i], NULL, FakeOS_simStep, (void*)args);
             if(ret) perror("\033[1;31mCreation of the thread failed\n");
         }
+
         for (int i = 0; i < cpus; ++i){
             ret = pthread_join(tids[i], NULL);
             if(ret) perror("\033[1;31mJoin of the thread failed\n");
         }
-        //FakeOS_simStep(&os);
+        
+        printf("Both the threads were joined\n");
+
         ++os.timer;
-        free(tids);
+
+        //free(tids);
     }
+    ret = sem_destroy(&mutex);
+    if(ret)perror("\033[1;31mSem_destroy failed\n");
 }
