@@ -44,6 +44,7 @@ int FakeProcess_load(FakeProcess *p, const char *filename)
             if (!counter){
                 e->prediction = 0;
             }else{
+                //We take the prev because we alternate between IO and CPU_BURST
                 ProcessEvent* temp = (ProcessEvent*)p->events.last->prev; 
                 e->prediction = 0.8*temp->duration + 0.2*temp->prediction;
             }

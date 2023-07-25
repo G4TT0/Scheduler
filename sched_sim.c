@@ -68,8 +68,7 @@ void schedSJF(FakeOS *os, void *args_){
 
     printf("Shortest found pid: %d, prediction: %f\n", pcb->pid, e->prediction);
 
-    if (e->duration > args->quantum)
-    {
+    if (e->duration > args->quantum){
         ProcessEvent *qe = (ProcessEvent *)malloc(sizeof(ProcessEvent));
         qe->list.prev = qe->list.next = 0;
         qe->type = CPU;
@@ -85,11 +84,12 @@ void schedSJF(FakeOS *os, void *args_){
 
 int main(int argc, char **argv){
     if (argc < 3){
-        printf("usage: %s <num_cpus> <process1> <process2> ...\n", argv[0]);
+        printf("\033[1;31mUSAGE: %s <num_cpus> <process1> <process2> ...\n", argv[0]);
         return -1;
     }
+    int cpus;
     if(!(cpus = atoi(argv[1]))){
-        printf("invalid number of cpus\n");
+        printf("\033[1;31mInvalid number of cpus\n");
         return -1;
     }
     FakeOS_init(&os);
@@ -98,25 +98,35 @@ int main(int argc, char **argv){
     sjf_args.lambda = 0.8;
     os.schedule_args = &sjf_args;
     os.schedule_fn = schedSJF;
+    os.cpus = cpus;
 
 
-    for (int i = 2; i < argc; ++i)
-    {
+    for (int i = 2; i < argc; ++i){
         FakeProcess new_process;
         int num_events = FakeProcess_load(&new_process, argv[i]);
         printf("loading [%s], pid: %d, events:%d\n",
                argv[i], new_process.pid, num_events);
-        if (num_events != 0)
-        {
+        if (num_events != 0){
             FakeProcess *new_process_ptr = (FakeProcess *)malloc(sizeof(FakeProcess));
             *new_process_ptr = new_process;
             List_pushBack(&os.processes, (ListItem *)new_process_ptr);
         }
     }
     printf("num processes in queue %d\n", os.processes.size);
-    while (os.running || os.ready.first || os.waiting.first || os.processes.first)
-    {
-        FakeOS_simStep(&os);
+    while (os.running || os.ready.first || os.waiting.first || os.processes.first){
+        int ret;
+        pthread_t* tids = (pthread_t*)malloc(cpus * sizeof(pthread_t));
+        for (int i = 0; i < cpus; ++i){
+            pthread_t tid = tids[i];
+            ret = pthread_create(&tid, NULL, FakeOS_simStep, (void*)&os);
+            if(ret) perror("\033[1;31mCreation of the thread failed\n");
+        }
+        for (int i = 0; i < cpus; ++i){
+            ret = pthread_join(tids[i], NULL);
+            if(ret) perror("\033[1;31mJoin of the thread failed\n");
+        }
+        //FakeOS_simStep(&os);
         ++os.timer;
+        free(tids);
     }
 }
