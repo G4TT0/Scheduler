@@ -5,11 +5,10 @@
 
 FakeOS os;
 
-typedef struct
-{
+typedef struct{
     int quantum;
-    int lambda;
-} SchedRRArgs;
+    float lambda;
+} SchedSJFargs;
 
 FakePCB* findSJ(FakeOS *os){
     int n_proc = os->ready.size;
@@ -20,8 +19,11 @@ FakePCB* findSJ(FakeOS *os){
         ProcessEvent* pe = (ProcessEvent*)tmp->events.first;
         if(pe->type == CPU){
             int prediction = pe->prediction;
-            if(i == 0) lowest = prediction;
-            if(prediction <= lowest){
+            if(i == 0) {
+                lowest = prediction;
+                shortest = tmp;
+            }
+            if(prediction < lowest){
                 shortest = tmp;
                 lowest = prediction;
             }
@@ -31,16 +33,14 @@ FakePCB* findSJ(FakeOS *os){
     return shortest;
 }
 
-void schedRR(FakeOS *os, void *args_)
-{
-    SchedRRArgs *args = (SchedRRArgs *)args_;
+void schedSJF(FakeOS *os, void *args_){
+    SchedSJFargs *args = (SchedSJFargs *)args_;
 
     // look for the first process in ready
     // if none, return
     if (!os->ready.first)
         return;
 
-    
     printf("Firsts events for processes in ready\n");
     FakePCB* tmp = (FakePCB*) os->ready.first;
     ProcessEvent* temp = (ProcessEvent*) tmp->events.first;
@@ -57,7 +57,6 @@ void schedRR(FakeOS *os, void *args_)
         }
     }
 
-
     FakePCB *pcb = (FakePCB*) findSJ(os);
     List_detach(&os->ready, (ListItem*)pcb);
 
@@ -69,10 +68,6 @@ void schedRR(FakeOS *os, void *args_)
 
     printf("Shortest found pid: %d, prediction: %f\n", pcb->pid, e->prediction);
 
-    // look at the first event
-    // if duration>quantum
-    // push front in the list of event a CPU event of duration quantum
-    // alter the duration of the old event subtracting quantum
     if (e->duration > args->quantum)
     {
         ProcessEvent *qe = (ProcessEvent *)malloc(sizeof(ProcessEvent));
@@ -80,26 +75,15 @@ void schedRR(FakeOS *os, void *args_)
         qe->type = CPU;
         qe->duration = args->quantum;
         e->duration -= args->quantum;
-        e->prediction = e->duration * 0.8 + e->prediction * 0.2;
+        e->prediction = (e->prediction * (1-args->lambda)) + (e->duration * args->lambda);
         qe->prediction = e->prediction;
         List_pushFront(&pcb->events, (ListItem *)qe);
     }
-
-
-};
-
-
-
-void schedSJF(FakeOS *os, void *args_){
-    FakePCB *pcb = (FakePCB *)List_popFront(&os->ready);
-    os->running = pcb;
-
-    
-
 }
 
-int main(int argc, char **argv)
-{
+
+
+int main(int argc, char **argv){
     if (argc < 3){
         printf("usage: %s <num_cpus> <process1> <process2> ...\n", argv[0]);
         return -1;
@@ -109,11 +93,11 @@ int main(int argc, char **argv)
         return -1;
     }
     FakeOS_init(&os);
-    SchedRRArgs srr_args;
-    srr_args.quantum = 5;
-    srr_args.lambda = 0.3;
-    os.schedule_args = &srr_args;
-    os.schedule_fn = schedRR;
+    SchedSJFargs sjf_args;
+    sjf_args.quantum = 5;
+    sjf_args.lambda = 0.8;
+    os.schedule_args = &sjf_args;
+    os.schedule_fn = schedSJF;
 
 
     for (int i = 2; i < argc; ++i)
