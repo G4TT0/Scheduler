@@ -119,8 +119,8 @@ int main(int argc, char **argv){
     ret = sem_init(&mutex, 0, 1);
     if(ret)perror("\033[1;31mSem_init failed\n");
 
-    while (os.running || os.ready.first || os.waiting.first || os.processes.first){
-        int escape= 0;
+    while (1){
+        int escape = 0;
         for (int i = 0; i < cpus+1; i++){
             if(i < cpus){
                 if(!os.running[i]) escape++;
@@ -133,6 +133,8 @@ int main(int argc, char **argv){
         if (escape == cpus + 3)break;
 
         printf("************** TIME: %08d **************\n", os.timer);
+
+        scan_waiting_list(&os);
 
         //pthread_t* tids = (pthread_t*)malloc(cpus * sizeof(pthread_t));
         pthread_t tids[cpus];

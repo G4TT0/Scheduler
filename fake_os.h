@@ -32,5 +32,6 @@ typedef struct {
     int threadId;
 } thread_args_t;
 
+void scan_waiting_list(FakeOS* os);
 void FakeOS_init(FakeOS *os, int cpus);
 void* FakeOS_simStep(void *os);
