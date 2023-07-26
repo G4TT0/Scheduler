@@ -133,42 +133,6 @@ void* FakeOS_simStep(void *arg_os){
     printf("\t[CPU %d] ready list size: %d\n", id, os->ready.size);
     printf("\t[CPU %d] waiting list size: %d\n", id, os->waiting.size);
 
-    // scan waiting list, and put in ready all items whose event terminates
-    //aux = os->waiting.first;
-    //while (aux) {
-    //    FakePCB *pcb = (FakePCB *)aux;
-    //    aux = aux->next;
-    //    ProcessEvent *e = (ProcessEvent *)pcb->events.first;
-    //    printf("\t[CPU %d] waiting pid: %d\n", id, pcb->pid);
-    //    assert(e->type == IO);
-    //    e->duration--;
-    //    printf("\t\t[CPU %d] remaining time:%d\n", id, e->duration);
-    //    if (e->duration == 0) {
-    //        printf("\t\t[CPU %d] end burst\n", id);
-    //        List_popFront(&pcb->events);
-    //        free(e);
-    //        List_detach(&os->waiting, (ListItem *)pcb);
-    //        if (!pcb->events.first) {
-    //            // kill process
-    //            printf("\t\t[CPU %d] end process\n", id);
-    //            free(pcb);
-    //        }else{
-    //            // handle next event
-    //            e = (ProcessEvent *)pcb->events.first;
-    //            switch (e->type){
-    //            case CPU:
-    //                printf("\t\t[CPU %d] move to ready\n", id);
-    //                List_pushBack(&os->ready, (ListItem *)pcb);
-    //                break;
-    //            case IO:
-    //                printf("\t\t[CPU %d] move to waiting\n", id);
-    //                List_pushBack(&os->waiting, (ListItem *)pcb);
-    //                break;
-    //            }
-    //        }
-    //    }
-    //}
-
     // decrement the duration of running
     // if event over, destroy event
     // and reschedule process
