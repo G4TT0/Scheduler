@@ -154,7 +154,7 @@ int main(int argc, char **argv){
             if(ret) perror("\033[1;31mJoin of the thread failed\n");
         }
         
-        printf("Both the threads were joined\n");
+        printf("All the threads were joined\n");
 
         ++os.timer;
     }
