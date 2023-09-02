@@ -4,3 +4,4 @@
 ./fake_process.o
 ./linked_list.o
 ./sched_sim
+.vscode/
