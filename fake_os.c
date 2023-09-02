@@ -110,9 +110,9 @@ void* FakeOS_simStep(void *arg_os){
 
     // scan process waiting to be started
     // and create all processes starting now
+    ret = sem_wait(&mutex);
     ListItem *aux = os->processes.first;
 
-    ret = sem_wait(&mutex);
     if(ret)perror("\033[1;31mSem_wait failed\n");
 
     while (aux){
