@@ -43,6 +43,7 @@ void schedSJF(FakeOS *os, void *args_, int id){
     if (!os->ready.first)
         return;
 
+    //*********For debug only *********
     printf("Firsts events for processes in ready\n");
     FakePCB* tmp = (FakePCB*) os->ready.first;
     ProcessEvent* temp = (ProcessEvent*) tmp->events.first;
@@ -58,6 +59,7 @@ void schedSJF(FakeOS *os, void *args_, int id){
             temp = (ProcessEvent*)tmp->events.first;
         }
     }
+    //********************************
 
     FakePCB *pcb = (FakePCB*) findSJ(os);
     List_detach(&os->ready, (ListItem*)pcb);
