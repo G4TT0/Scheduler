@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-
 #include "fake_os.h"
 
 void FakeOS_init(FakeOS *os, int cpus){

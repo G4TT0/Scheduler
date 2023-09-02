@@ -155,8 +155,6 @@ int main(int argc, char **argv){
         printf("Both the threads were joined\n");
 
         ++os.timer;
-
-        //free(tids);
     }
     ret = sem_destroy(&mutex);
     if(ret)perror("\033[1;31mSem_destroy failed\n");
