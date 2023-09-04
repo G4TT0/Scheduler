@@ -2,6 +2,7 @@ Scheduler:
 
 To test the scheduler simply run:
 
+make
 ./sched_sim <num of cpus> <list of processes>
 
 In the folder "processi" you can find some test cases
