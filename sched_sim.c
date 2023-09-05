@@ -40,47 +40,83 @@ void schedSJF(FakeOS *os, void *args_, int id){
 
     // look for the first process in ready
     // if none, return
-    if (!os->ready.first)
-        return;
+    if(os->running[id]){
 
-    //*********For debug only *********
-    printf("Firsts events for processes in ready\n");
-    FakePCB* tmp = (FakePCB*) os->ready.first;
-    ProcessEvent* temp = (ProcessEvent*) tmp->events.first;
-    for (int i = 0; i < os->ready.size; ++i){
-        if (temp->type == CPU){
-            printf("\t-------Pid: %d-------\n", tmp->pid);
-            printf("\tType: %s\n", temp->type==0?"CPU":"IO");
-            printf("\tDuration: %d\n", temp->duration);
-            printf("\tPrediction: %f\n", temp->prediction);
+        FakePCB *running = os->running[id];
+        ProcessEvent *e = (ProcessEvent *)running->events.first;
+        assert(e->type == CPU);
+        e->duration--;
+        e->preemption++;
+        printf("\t\t[CPU %d] remaining time:%d\n", id, e->duration);
+        printf("\t\t[CPU %d] preemption:%d\n", id, e->preemption);
+        if (e->duration == 0){
+            printf("\t\t[CPU %d] end burst\n", id);
+            List_popFront(&running->events);
+            free(e);
+            if (!running->events.first){
+                printf("\t\t[CPU %d] end process\n", id);
+                free(running); // kill process
+            }else{
+                e = (ProcessEvent *)running->events.first;
+                switch (e->type){
+                case CPU:
+                    printf("\t\t[CPU %d] move to ready\n", id);
+                    List_pushBack(&os->ready, (ListItem *)running);
+                    break;
+                case IO:
+                    printf("\t\t[CPU %d] move to waiting\n", id);
+                    List_pushBack(&os->waiting, (ListItem *)running);
+                    break;
+                }
+            }
+            os->running[id] = 0;
+        }else if(e->preemption == args->quantum){
+            e->prediction = (e->prediction * (1-args->lambda)) + (e->duration * args->lambda);
+            e->preemption = 0;
+            printf("\t\t[CPU %d] preemption reset\n", id);
+            printf("\t\t[CPU %d] move to ready\n", id);
+            List_pushBack(&os->ready, (ListItem *)running);
+            os->running[id] = 0;
         }
-        if(tmp->list.next && tmp->events.first){
-            tmp = (FakePCB*) tmp->list.next;
-            temp = (ProcessEvent*)tmp->events.first;
-        }
+
+
     }
-    //********************************
 
-    FakePCB *pcb = (FakePCB*) findSJ(os);
-    List_detach(&os->ready, (ListItem*)pcb);
+    if(!os->running[id]){
 
-    os->running[id] = pcb;
+        if (!os->ready.first)
+            return;
 
-    assert(pcb->events.first);
-    ProcessEvent* e = (ProcessEvent*)pcb->events.first;
-    assert(e->type == CPU);
+        //*********For debug only *********
+        printf("Firsts events for processes in ready\n");
+        FakePCB* tmp = (FakePCB*) os->ready.first;
+        ProcessEvent* temp = (ProcessEvent*) tmp->events.first;
+        for (int i = 0; i < os->ready.size; ++i){
+            if (temp->type == CPU){
+                printf("\t-------Pid: %d-------\n", tmp->pid);
+                printf("\tType: %s\n", temp->type==0?"CPU":"IO");
+                printf("\tDuration: %d\n", temp->duration);
+                printf("\tPrediction: %f\n", temp->prediction);
+            }
+            if(tmp->list.next && tmp->events.first){
+                tmp = (FakePCB*) tmp->list.next;
+                temp = (ProcessEvent*)tmp->events.first;
+            }
+        }
+        //********************************
 
-    printf("Shortest found pid: %d, prediction: %f\n", pcb->pid, e->prediction);
+        FakePCB *pcb = (FakePCB*) findSJ(os);
+        List_detach(&os->ready, (ListItem*)pcb);
 
-    if (e->duration > args->quantum){
-        ProcessEvent *qe = (ProcessEvent *)malloc(sizeof(ProcessEvent));
-        qe->list.prev = qe->list.next = 0;
-        qe->type = CPU;
-        qe->duration = args->quantum;
-        e->duration -= args->quantum;
-        e->prediction = (e->prediction * (1-args->lambda)) + (e->duration * args->lambda);
-        qe->prediction = e->prediction;
-        List_pushFront(&pcb->events, (ListItem *)qe);
+        os->running[id] = pcb;
+
+        assert(pcb->events.first);
+        ProcessEvent* e = (ProcessEvent*)pcb->events.first;
+        assert(e->type == CPU);
+
+        printf("Shortest found pid: %d, prediction: %f\n", pcb->pid, e->prediction);
+        printf("Scheduler pushed pid %d in running\n",  os->running[id] ? os->running[id]->pid : -1);
+
     }
 }
 

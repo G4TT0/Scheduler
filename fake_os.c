@@ -138,48 +138,13 @@ void* FakeOS_simStep(void *arg_os){
     // if last event, destroy running
     FakePCB *running = os->running[id];
     printf("\t[CPU %d] running pid: %d\n", id, running ? running->pid : -1);
-    if (running){
-        ProcessEvent *e = (ProcessEvent *)running->events.first;
-        assert(e->type == CPU);
-        e->duration--;
-        printf("\t\t[CPU %d] remaining time:%d\n", id, e->duration);
-        if (e->duration == 0){
-            printf("\t\t[CPU %d] end burst\n", id);
-            List_popFront(&running->events);
-            free(e);
-            if (!running->events.first){
-                printf("\t\t[CPU %d] end process\n", id);
-                free(running); // kill process
-            }else{
-                e = (ProcessEvent *)running->events.first;
-                switch (e->type){
-                case CPU:
-                    printf("\t\t[CPU %d] move to ready\n", id);
-                    List_pushBack(&os->ready, (ListItem *)running);
-                    break;
-                case IO:
-                    printf("\t\t[CPU %d] move to waiting\n", id);
-                    List_pushBack(&os->waiting, (ListItem *)running);
-                    break;
-                }
-            }
-            os->running[id] = 0;
-        }
-    }
 
-    // call schedule, if defined
-    if (os->schedule_fn && !os->running[id]){
-        (*os->schedule_fn)(os, os->schedule_args, id);
-        printf("\t[CPU %d] scheduler pushed pid %d in running\n", id,  os->running[id] ? os->running[id]->pid : -1);
-    }
 
-    // if running not defined and ready queue not empty
-    // put the first in ready to run
-    if (!os->running[id] && os->ready.first){
-        os->running[id] = (FakePCB *)List_popFront(&os->ready);
-    }
+    (*os->schedule_fn)(os, os->schedule_args, id);
+    //printf("\t[CPU %d] scheduler pushed pid %d in running\n", id,  os->running[id] ? os->running[id]->pid : -1);
+    
 
-    sem_post(&mutex);
+    ret = sem_post(&mutex);
     if(ret)perror("\033[1;31mSem_post failed\n");
 
     free(arg_os);

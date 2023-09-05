@@ -9,6 +9,7 @@ typedef struct {
   ResourceType type;
   int duration;
   float prediction;
+  int preemption;
 } ProcessEvent;
 
 // fake process

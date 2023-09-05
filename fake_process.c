@@ -41,6 +41,7 @@ int FakeProcess_load(FakeProcess *p, const char *filename)
             e->list.prev = e->list.next = 0;
             e->type = CPU;
             e->duration = duration;
+            e->preemption = 0;
             if (!counter){
                 e->prediction = 0;
             }else{
